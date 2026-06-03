@@ -6,6 +6,7 @@ import AdminPanel from "./pages/AdminPanel";
 import ManagerPanel from "./pages/ManagerPanel";
 import QRPage from "./pages/QRPage";
 import LoginPage from "./pages/LoginPage";
+import SignupPage from "./pages/SignupPage";
 
 function App() {
   const [user, setUser] = useState(null);
@@ -52,6 +53,7 @@ function App() {
       )}
       <Routes>
         <Route path="/" element={<MenuPage />} />
+        <Route path="/signup" element={!user ? <SignupPage /> : <Navigate to="/manager" />} />
         <Route path="/login" element={!user ? <LoginPage onLogin={() => {}} /> : <Navigate to="/manager" />} />
         <Route path="/manager" element={user ? <ManagerPanel /> : <Navigate to="/login" />} />
         <Route path="/admin" element={user ? <AdminPanel /> : <Navigate to="/login" />} />
