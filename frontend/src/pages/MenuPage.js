@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { db } from "../firebase";
-import { collection, getDocs, addDoc } from "firebase/firestore";
+import { collection, getDocs, addDoc, query, where } from "firebase/firestore";
 import "../App.css";
 
 function MenuPage() {
@@ -12,14 +12,20 @@ function MenuPage() {
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showPayment, setShowPayment] = useState(false);
-  const [tableNo] = useState(() => {
-    const params = new URLSearchParams(window.location.search);
-    return params.get("table") || 1;
-  });
+
+  const params = new URLSearchParams(window.location.search);
+  const tableNo = params.get("table") || 1;
+  const restaurantId = params.get("restaurant");
 
   useEffect(() => {
     const fetchMenu = async () => {
-      const snapshot = await getDocs(collection(db, "menu_items"));
+      let snapshot;
+      if (restaurantId) {
+        const q = query(collection(db, "menu_items"), where("restaurantId", "==", restaurantId));
+        snapshot = await getDocs(q);
+      } else {
+        snapshot = await getDocs(collection(db, "menu_items"));
+      }
       const items = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
       const organized = { All: items };
       items.forEach((item) => {
@@ -30,7 +36,7 @@ function MenuPage() {
       setLoading(false);
     };
     fetchMenu();
-  }, []);
+  }, [restaurantId]);
 
   const addToCart = (item) => {
     const exists = cart.find((c) => c.id === item.id);
@@ -52,11 +58,12 @@ function MenuPage() {
 
   const placeOrder = async (payment) => {
     if (cart.length === 0) {
-      alert("❌ Cart khali hai!");
+      alert("Cart is empty!");
       return;
     }
     try {
       await addDoc(collection(db, "orders"), {
+        restaurantId: restaurantId,
         tableNo: tableNo,
         items: cart.map((item) => ({
           name: item.name,
@@ -75,7 +82,7 @@ function MenuPage() {
       setCartOpen(false);
       setShowPayment(false);
     } catch (error) {
-      alert("❌ Order place nahi hua — dobara try karo!");
+      alert("Order could not be placed — please try again!");
     }
   };
 
@@ -94,7 +101,7 @@ function MenuPage() {
         height: "100vh",
         fontSize: "20px"
       }}>
-        🍽️ Menu load ho raha hai...
+        🍽️ Loading menu...
       </div>
     );
   }
@@ -105,7 +112,7 @@ function MenuPage() {
         <div className="success-card">
           <div className="success-icon">✅</div>
           <h1>Order Placed!</h1>
-          <p>Table {tableNo} ka order kitchen ko mil gaya!</p>
+          <p>Table {tableNo} order has been sent to kitchen!</p>
           <p className="success-sub">Approximate time: 20-30 minutes</p>
           <button onClick={() => setOrderPlaced(false)} className="back-btn">
             Back to Menu
@@ -231,8 +238,8 @@ function MenuPage() {
             </div>
             {cart.length === 0 ? (
               <div className="cart-empty">
-                <p>🛒 Cart khali hai!</p>
-                <p>Kuch add karo menu se</p>
+                <p>🛒 Cart is empty!</p>
+                <p>Add items from the menu</p>
               </div>
             ) : (
               <div className="cart-body">
@@ -260,17 +267,14 @@ function MenuPage() {
                     <span>Total</span>
                     <span>Rs. {totalPrice}</span>
                   </div>
-
                   {!showPayment ? (
-                    <button
-                      className="order-btn"
-                      onClick={() => setShowPayment(true)}>
+                    <button className="order-btn" onClick={() => setShowPayment(true)}>
                       ✅ Place Order
                     </button>
                   ) : (
                     <div>
                       <p style={{ fontWeight: "600", marginBottom: "10px", fontSize: "15px" }}>
-                        💳 Payment Method Choose Karo:
+                        💳 Choose Payment Method:
                       </p>
                       <button
                         onClick={() => placeOrder("cash")}

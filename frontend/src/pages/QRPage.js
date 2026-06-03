@@ -1,8 +1,8 @@
 import { QRCodeSVG } from "qrcode.react";
 
-function QRPage() {
-  const tables = [1, 2, 3, 4, 5, 6, 7];
-  const baseUrl = "https://majestic-meringue-eb4ec6.netlify.app";
+function QRPage({ restaurantId, tables }) {
+  const baseUrl = "https://smart-restaurant-pk.netlify.app";
+  const tableCount = tables || 7;
 
   const handlePrint = (tableNo) => {
     const printWindow = window.open("", "_blank");
@@ -21,9 +21,9 @@ function QRPage() {
           <h2>🍽️ Smart Restaurant</h2>
           <h3>Table ${tableNo}</h3>
           <p>Scan karo aur order karo!</p>
-          <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${baseUrl}?table=${tableNo}" />
+          <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${baseUrl}?restaurant=${restaurantId}&table=${tableNo}" />
           <p style="margin-top: 20px; font-size: 12px; color: #aaa;">
-            ${baseUrl}?table=${tableNo}
+            ${baseUrl}?restaurant=${restaurantId}&table=${tableNo}
           </p>
           <script>window.print();</script>
         </body>
@@ -44,7 +44,7 @@ function QRPage() {
         gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
         gap: "20px"
       }}>
-        {tables.map((tableNo) => (
+        {Array.from({ length: tableCount }, (_, i) => i + 1).map((tableNo) => (
           <div key={tableNo} style={{
             background: "white",
             border: "1px solid #eee",
@@ -55,7 +55,7 @@ function QRPage() {
           }}>
             <h3 style={{ marginBottom: "12px" }}>Table {tableNo}</h3>
             <QRCodeSVG
-              value={`${baseUrl}?table=${tableNo}`}
+              value={`${baseUrl}?restaurant=${restaurantId}&table=${tableNo}`}
               size={150}
               level="H"
             />
